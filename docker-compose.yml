@@ -1,0 +1,24 @@
+services:
+  mongo:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: Pa55WWord
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: mongo
+      DB_USERNAME: root
+      DB_PASSWORD: Pa55WWord
+    # Fresh indexes and demo data on every start, then serve the API.
+    command: sh -c "php artisan migrate:fresh --seed --force && php artisan serve --host=0.0.0.0 --port=8000"
+    depends_on:
+      mongo:
+        condition: service_healthy
